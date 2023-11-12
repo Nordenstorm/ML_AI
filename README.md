@@ -1,1 +1,1 @@
-Here I post ML model. Both stasistical models but also NN/Regression
+Here I post ML model. Both statistical models but also NN/Regression
