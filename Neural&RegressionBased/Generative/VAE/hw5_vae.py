@@ -121,7 +121,6 @@ class VAE(nn.Module):
         return x
 
 
-    # Compute Log-pdf of z under Diagonal Gaussian N(z|μ,σ^2 I)
     @staticmethod
     def logpdf_diagonal_gaussian(z, mu, sigma_square):
         # Input:
@@ -131,15 +130,8 @@ class VAE(nn.Module):
         # Output:
         #    logprob: log-probability of a diagonal gaussian [batch_size]
 
-        batch_size,latent_dimension=z.shape
-        logprob=torch.zeros(batch_size)
-        for index_i,(z_i,mu_i,sigma_i) in enumerate(zip(z,mu,sigma_square)):
+        logprob = torch.distributions.Normal(mu, torch.sqrt(sigma_square)).log_prob(z).sum(dim=1)
 
-            term1=-(1/2)*torch.sum((z_i-mu_i)*(1/(sigma_i)*(z_i-mu_i)))
-
-            term2=-(1/2)*torch.sum(torch.log(2*torch.pi*sigma_i))
-
-            logprob[index_i]=term1+term2
 
         return logprob
 
@@ -151,24 +143,11 @@ class VAE(nn.Module):
         #   p: the probability of the x being labeled 1 (p is the output of the decoder) [batch_size x data_dimension]
         # Output:
         #   logprob: log-probability of a bernoulli distribution [batch_size]
-
-        batch_size,latent_dimension=x.shape
-        logprob=torch.zeros(batch_size)
-
-        for index_i, (x_i, p_i) in enumerate(zip(x, p)):
-            log_p=0
-            for index_j, (x_ij, p_ij) in enumerate(zip(x_i, p_i)):
-
-                if x_ij==1:
-                    log_p=log_p+torch.log(p_ij)
-
-                else:
-                    log_p=log_p+torch.log(1-p_ij)
-
-            logprob[index_i]=logprob[index_i]+log_p
+        logprob = torch.distributions.Bernoulli(p).log_prob(x).sum(dim=1)
 
 
         return logprob
+
 
     # Sample z ~ q(z|x)
     def sample_z(self, mu, sigma_square):
